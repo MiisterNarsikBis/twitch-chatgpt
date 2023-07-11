@@ -81,6 +81,8 @@ app.get('/gpt/:text', async (req, res) => {
         presence_penalty: 0,
       });
     
+      let maxLength = 399; // Longueur maximale souhaitée
+
       if (response.data.choices) {
         let agent_response = response.data.choices[0].message.content
 
@@ -88,9 +90,18 @@ app.get('/gpt/:text', async (req, res) => {
         messages.push({role: "assistant", content: agent_response})
 
         //Check for Twitch max. chat message length limit and slice if needed
-        if(agent_response.length > 399){
+        if(agent_response.length > maxLength){
           console.log("Agent answer exceeds twitch chat limit. Slicing to first 399 characters.")
-          agent_response = agent_response.substring(0, 390) + '...';
+
+          let lastSpaceIndex = agent_response.lastIndexOf(' ', maxLength);
+          console.log("Agent answer exceeds twitch chat limit. Slicing to first 399 characters.")
+          if (lastSpaceIndex !== -1) {
+            // Couper le texte au dernier mot
+            agent_response = agent_response.substring(0, lastSpaceIndex) + '...';
+          } else {
+            // Si aucun espace n'est trouvé, couper simplement à la limite de longueur
+            agent_response = agent_response.substring(0, maxLength) + '...';
+          }          
           console.log ("Sliced agent answer: " + agent_response)
         }
 
@@ -108,7 +119,7 @@ app.get('/gpt/:text', async (req, res) => {
         model: "text-davinci-003",
         prompt: prompt,
         temperature: 0.5,
-        max_tokens: 128,
+        max_tokens: 100,
         top_p: 1,
         frequency_penalty: 0,
         presence_penalty: 0,
@@ -117,9 +128,17 @@ app.get('/gpt/:text', async (req, res) => {
         let agent_response = response.data.choices[0].text
           console.log ("Agent answer: " + agent_response)
           //Check for Twitch max. chat message length limit and slice if needed
-          if(agent_response.length > 399){
+
+          if(agent_response.length > maxLength){
+            let lastSpaceIndex = agent_response.lastIndexOf(' ', maxLength);
             console.log("Agent answer exceeds twitch chat limit. Slicing to first 399 characters.")
-            agent_response = agent_response.substring(0, 399)
+            if (lastSpaceIndex !== -1) {
+              // Couper le texte au dernier mot
+              agent_response = agent_response.substring(0, lastSpaceIndex) + '...';
+            } else {
+              // Si aucun espace n'est trouvé, couper simplement à la limite de longueur
+              agent_response = agent_response.substring(0, maxLength) + '...';
+            }
             console.log ("Sliced Agent answer: " + agent_response)
           }
 

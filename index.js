@@ -91,17 +91,18 @@ app.get('/gpt/:text', async (req, res) => {
         messages.push({role: "assistant", content: agent_response})
 
         //Check for Twitch max. chat message length limit and slice if needed
-        if (agent_response.length > maxLength) {
-          const lastPunctuationIndex = agent_response.search(/[.!?]+$/);
-          if (lastPunctuationIndex !== -1) {
-            // Couper le texte au dernier caractère de ponctuation
-            agent_response = agent_response.slice(0, lastPunctuationIndex + 1);
-          } else {
-            // Si aucun caractère de ponctuation n'est trouvé, couper simplement à la limite de longueur
-            agent_response = agent_response.slice(0, maxLength) + '...';
-          }
-          console.log("Sliced Agent answer: " + agent_response);
+        const punctuationRegex = /[.!?]+$/;
+        const lastPunctuationMatch = agent_response.match(punctuationRegex);
+        if (lastPunctuationMatch) {
+          const lastPunctuationIndex = lastPunctuationMatch.index;
+          // Couper le texte au dernier caractère de ponctuation
+          agent_response = agent_response.slice(0, lastPunctuationIndex + lastPunctuationMatch[0].length);
+        } else {
+          // Si aucun caractère de ponctuation n'est trouvé, couper simplement à la limite de longueur
+          agent_response = agent_response.slice(0, maxLength) + '...';
         }
+        console.log("Sliced Agent answer: " + agent_response);
+        
 
         res.send(agent_response)
       } else {

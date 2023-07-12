@@ -55,6 +55,9 @@ app.get('/gpt/:text', async (req, res) => {
 
     const openai = new OpenAIApi(configuration);      
     
+    let maxLength = 399; // Longueur maximale souhaitée
+
+
     if (GPT_MODE === "CHAT"){
       //CHAT MODE EXECUTION
 
@@ -81,8 +84,6 @@ app.get('/gpt/:text', async (req, res) => {
         presence_penalty: 0,
       });
     
-      let maxLength = 399; // Longueur maximale souhaitée
-
       if (response.data.choices) {
         let agent_response = response.data.choices[0].message.content
 
@@ -90,19 +91,16 @@ app.get('/gpt/:text', async (req, res) => {
         messages.push({role: "assistant", content: agent_response})
 
         //Check for Twitch max. chat message length limit and slice if needed
-        if(agent_response.length > maxLength){
-          console.log("Agent answer exceeds twitch chat limit. Slicing to first 399 characters.")
-
-          let lastSpaceIndex = agent_response.lastIndexOf(' ', maxLength);
-          console.log("Agent answer exceeds twitch chat limit. Slicing to first 399 characters.")
-          if (lastSpaceIndex !== -1) {
-            // Couper le texte au dernier mot
-            agent_response = agent_response.substring(0, lastSpaceIndex) + '...';
+        if (agent_response.length > maxLength) {
+          const lastPunctuationIndex = agent_response.search(/[.!?]+$/);
+          if (lastPunctuationIndex !== -1) {
+            // Couper le texte au dernier caractère de ponctuation
+            agent_response = agent_response.slice(0, lastPunctuationIndex + 1);
           } else {
-            // Si aucun espace n'est trouvé, couper simplement à la limite de longueur
-            agent_response = agent_response.substring(0, maxLength) + '...';
-          }          
-          console.log ("Sliced agent answer: " + agent_response)
+            // Si aucun caractère de ponctuation n'est trouvé, couper simplement à la limite de longueur
+            agent_response = agent_response.slice(0, maxLength) + '...';
+          }
+          console.log("Sliced Agent answer: " + agent_response);
         }
 
         res.send(agent_response)
@@ -129,17 +127,16 @@ app.get('/gpt/:text', async (req, res) => {
           console.log ("Agent answer: " + agent_response)
           //Check for Twitch max. chat message length limit and slice if needed
 
-          if(agent_response.length > maxLength){
-            let lastSpaceIndex = agent_response.lastIndexOf(' ', maxLength);
-            console.log("Agent answer exceeds twitch chat limit. Slicing to first 399 characters.")
-            if (lastSpaceIndex !== -1) {
-              // Couper le texte au dernier mot
-              agent_response = agent_response.substring(0, lastSpaceIndex) + '...';
+          if (agent_response.length > maxLength) {
+            const lastPunctuationIndex = agent_response.search(/[.!?]+$/);
+            if (lastPunctuationIndex !== -1) {
+              // Couper le texte au dernier caractère de ponctuation
+              agent_response = agent_response.slice(0, lastPunctuationIndex + 1);
             } else {
-              // Si aucun espace n'est trouvé, couper simplement à la limite de longueur
-              agent_response = agent_response.substring(0, maxLength) + '...';
+              // Si aucun caractère de ponctuation n'est trouvé, couper simplement à la limite de longueur
+              agent_response = agent_response.slice(0, maxLength) + '...';
             }
-            console.log ("Sliced Agent answer: " + agent_response)
+            console.log("Sliced Agent answer: " + agent_response);
           }
 
           res.send(agent_response)
